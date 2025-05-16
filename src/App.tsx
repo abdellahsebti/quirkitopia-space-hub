@@ -9,6 +9,7 @@ import About from "./pages/About";
 import Categories from "./pages/Categories";
 import Contact from "./pages/Contact";
 import IdeaForm from "./pages/IdeaForm";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/categories" element={<Categories />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/idea-form" element={<IdeaForm />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

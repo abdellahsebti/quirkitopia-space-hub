@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,6 +8,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -19,6 +22,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const IdeaForm = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -29,21 +34,37 @@ const IdeaForm = () => {
     },
   });
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Form submitted:", data);
-    
-    // In a real app, you'd send this data to your backend
-    // For now, we'll just show a success message
-    toast({
-      title: "Idea submitted successfully!",
-      description: "Thank you for your contribution to Quirkitopia Space!",
-    });
-    
-    form.reset();
+  const onSubmit = async (data: FormValues) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Add document to Firestore
+      await addDoc(collection(db, "ideas"), {
+        ...data,
+        createdAt: serverTimestamp(),
+        reviewed: false,
+      });
+      
+      toast({
+        title: "Idea submitted successfully!",
+        description: "Thank you for your contribution to Quirkitopia Space!",
+      });
+      
+      form.reset();
+    } catch (error) {
+      console.error("Error submitting idea:", error);
+      toast({
+        title: "Error submitting idea",
+        description: "There was a problem submitting your idea. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white dark:bg-dark/80 rounded-xl shadow-lg p-8">
+    <div className="max-w-xl mx-auto bg-white dark:bg-dark/80 rounded-xl shadow-lg p-8 hover-card">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
@@ -53,7 +74,11 @@ const IdeaForm = () => {
               <FormItem>
                 <FormLabel>Your Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="John Doe" {...field} />
+                  <Input 
+                    placeholder="John Doe" 
+                    {...field} 
+                    className="focus:ring-2 focus:ring-accent transition-all duration-300"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -67,7 +92,12 @@ const IdeaForm = () => {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="john@example.com" type="email" {...field} />
+                  <Input 
+                    placeholder="john@example.com" 
+                    type="email" 
+                    {...field} 
+                    className="focus:ring-2 focus:ring-accent transition-all duration-300"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -82,7 +112,7 @@ const IdeaForm = () => {
                 <FormLabel>Category</FormLabel>
                 <FormControl>
                   <select 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300"
                     {...field}
                   >
                     <option value="">Select a category</option>
@@ -106,7 +136,7 @@ const IdeaForm = () => {
                 <FormControl>
                   <Textarea 
                     placeholder="Share your quirky idea with us..." 
-                    className="min-h-32"
+                    className="min-h-32 focus:ring-2 focus:ring-accent transition-all duration-300"
                     {...field} 
                   />
                 </FormControl>
@@ -117,9 +147,17 @@ const IdeaForm = () => {
           
           <Button 
             type="submit" 
-            className="w-full bg-accent text-dark hover:bg-accent/80 font-bold"
+            className="w-full bg-accent text-dark hover:bg-accent/80 font-bold transform transition-all duration-300 hover:scale-105 disabled:hover:scale-100"
+            disabled={isSubmitting}
           >
-            💡 Submit Your Idea
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>💡 Submit Your Idea</>
+            )}
           </Button>
         </form>
       </Form>
