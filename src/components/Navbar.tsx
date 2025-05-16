@@ -16,9 +16,9 @@ const NavLink = ({ to, label, isActive, onClick }: NavLinkProps) => (
     to={to}
     className={`relative px-3 py-2 transition-colors duration-300 ${
       isActive
-        ? 'text-creative font-bold'
+        ? 'text-white font-bold'
         : 'text-white hover:text-creative'
-    }`}
+    } text-shadow`}
     onClick={onClick}
   >
     {label}
@@ -87,7 +87,7 @@ const Navbar = () => {
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to="/" className="flex items-center space-x-2">
-          <span className="text-2xl font-serif font-bold text-white">
+          <span className="text-2xl font-serif font-bold text-white text-shadow">
             Quirkitopia <span className="text-accent">Space!</span>
           </span>
         </Link>
