@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Menu, X, Sun, Moon } from 'lucide-react';
@@ -72,11 +71,22 @@ const Navbar = () => {
       className="fixed top-0 left-0 w-full z-50 py-2 bg-primary shadow-lg"
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
-        <Link to="/" className="flex items-center space-x-2 group">
-          <span className="text-2xl font-serif font-bold text-white text-shadow group-hover:scale-105 transition-transform">
-            Quirkitopia <span className="text-accent animate-pulse">Space!</span>
-          </span>
-        </Link>
+        <div className="flex items-center space-x-4">
+          <Link to="/" className="flex items-center space-x-2 group">
+            <span className="text-2xl font-serif font-bold text-white text-shadow group-hover:scale-105 transition-transform">
+              Quirkitopia <span className="text-accent animate-pulse">Space!</span>
+            </span>
+          </Link>
+          <Link 
+            to="/admin/login"
+            className="text-sm text-white/80 hover:text-accent transition-colors flex items-center space-x-1"
+          >
+            <span className="hidden sm:inline">Admin</span>
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-accent/20 text-accent">
+              👑
+            </span>
+          </Link>
+        </div>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-1">
