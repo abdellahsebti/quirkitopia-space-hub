@@ -19,9 +19,10 @@ interface Book {
 interface YouTubeChannel {
   id: string;
   title: string;
+  creator: string;
   description: string;
-  imageUrl: string;
-  link: string;
+  channelUrl: string;
+  thumbnailUrl: string;
   createdAt: any;
 }
 
@@ -35,29 +36,30 @@ interface Podcast {
 }
 
 const CategoryItem = ({ item, type }: { item: Book | YouTubeChannel | Podcast; type: string }) => {
+  const contentUrl = type === 'youtube' ? (item as YouTubeChannel).channelUrl : item.link;
+
   return (
-    <div className="bg-white dark:bg-dark/80 rounded-xl p-6 shadow-md hover-card">
+    <a 
+      href={contentUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block bg-white dark:bg-dark/80 rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+    >
       {item.imageUrl && (
         <img 
-          src={item.imageUrl} 
+          src={type === 'youtube' ? (item as YouTubeChannel).thumbnailUrl : item.imageUrl} 
           alt={item.title} 
           className="w-full h-48 object-cover rounded-lg mb-4"
         />
       )}
       <h3 className="text-xl font-serif font-bold mb-2">{item.title}</h3>
       {'author' in item && <p className="text-secondary mb-2">by {item.author}</p>}
+      {'creator' in item && <p className="text-secondary mb-2">by {(item as YouTubeChannel).creator}</p>}
       <p className="mb-4">{item.description}</p>
-      {item.link && (
-        <a 
-          href={item.link} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="inline-block bg-accent text-dark px-4 py-2 rounded-lg hover:bg-accent/80 transition-colors"
-        >
-          Learn More
-        </a>
-      )}
-    </div>
+      <div className="inline-block bg-accent text-dark px-4 py-2 rounded-lg">
+        Learn More
+      </div>
+    </a>
   );
 };
 

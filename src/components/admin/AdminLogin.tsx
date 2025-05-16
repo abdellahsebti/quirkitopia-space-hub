@@ -24,8 +24,8 @@ const AdminLogin = () => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "quirkitopiaspace",
-      password: "Quirk!topia2024#Secure",
+      username: "",
+      password: "",
     },
   });
 
