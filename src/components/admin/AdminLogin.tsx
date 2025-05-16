@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -8,12 +7,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
-import { auth } from '@/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
+  username: z.string().min(3, { message: "Username must be at least 3 characters." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
@@ -21,28 +19,35 @@ type FormValues = z.infer<typeof formSchema>;
 
 const AdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      username: "quirkitopiaspace",
+      password: "Quirk!topia2024#Secure",
     },
   });
 
   const onSubmit = async (data: FormValues) => {
     try {
       setIsLoading(true);
-      await signInWithEmailAndPassword(auth, data.email, data.password);
-      toast({
-        title: "Login successful",
-        description: "Welcome to the admin panel.",
-      });
+      // For now, we'll use a simple check against the preset values
+      if (data.username === "quirkitopiaspace" && data.password === "Quirk!topia2024#Secure") {
+        toast({
+          title: "Login successful",
+          description: "Welcome to the admin panel.",
+        });
+        // Redirect to admin dashboard
+        navigate('/admin/dashboard');
+      } else {
+        throw new Error("Invalid credentials");
+      }
     } catch (error) {
       console.error("Error signing in: ", error);
       toast({
         title: "Login failed",
-        description: "Invalid email or password.",
+        description: "Invalid username or password.",
         variant: "destructive",
       });
     } finally {
@@ -62,12 +67,12 @@ const AdminLogin = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="email"
+                name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input placeholder="admin@example.com" {...field} />
+                      <Input placeholder="Enter your username" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

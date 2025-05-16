@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -39,11 +38,13 @@ const IdeaForm = () => {
       setIsSubmitting(true);
       
       // Add document to Firestore
-      await addDoc(collection(db, "ideas"), {
+      const docRef = await addDoc(collection(db, "ideas"), {
         ...data,
         createdAt: serverTimestamp(),
         reviewed: false,
       });
+      
+      console.log("Idea submitted successfully with ID:", docRef.id);
       
       toast({
         title: "Idea submitted successfully!",
@@ -51,11 +52,16 @@ const IdeaForm = () => {
       });
       
       form.reset();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting idea:", error);
+      
+      // More detailed error message
+      const errorMessage = error.message || "Unknown error occurred";
+      console.error("Firebase error details:", errorMessage);
+      
       toast({
         title: "Error submitting idea",
-        description: "There was a problem submitting your idea. Please try again.",
+        description: `There was a problem submitting your idea: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {

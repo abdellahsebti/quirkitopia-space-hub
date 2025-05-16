@@ -1,45 +1,62 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { db } from '@/lib/firebase';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SectionWrapper from '@/components/SectionWrapper';
 
-// Sample data - in a real app, this would come from an API
-const categoriesData = {
-  books: [
-    { title: "Thinking, Fast and Slow", author: "Daniel Kahneman", description: "Explores the two systems that drive the way we think", tags: ["Psychology", "Behavioral Economics"] },
-    { title: "Sapiens", author: "Yuval Noah Harari", description: "A brief history of humankind", tags: ["History", "Anthropology"] },
-    { title: "The Design of Everyday Things", author: "Don Norman", description: "How design serves as the communication between object and user", tags: ["Design", "Psychology"] },
-  ],
-  youtube: [
-    { title: "Kurzgesagt", description: "Animated educational videos covering science topics", tags: ["Science", "Animation"] },
-    { title: "Veritasium", description: "Science and engineering videos answering questions about life", tags: ["Physics", "Engineering"] },
-    { title: "TED-Ed", description: "Animated lessons on all subjects", tags: ["Education", "Animation"] },
-  ],
-  podcasts: [
-    { title: "Radiolab", description: "Investigates a strange world through science and philosophy", tags: ["Science", "Storytelling"] },
-    { title: "Freakonomics Radio", description: "Explores the hidden side of everything", tags: ["Economics", "Society"] },
-    { title: "99% Invisible", description: "About all the thought that goes into the things we don't think about", tags: ["Design", "Architecture"] },
-  ]
-};
+interface Book {
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  imageUrl: string;
+  link: string;
+  createdAt: any;
+}
 
-const CategoryItem = ({ item, type }: { item: any; type: string }) => {
+interface YouTubeChannel {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  link: string;
+  createdAt: any;
+}
+
+interface Podcast {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  link: string;
+  createdAt: any;
+}
+
+const CategoryItem = ({ item, type }: { item: Book | YouTubeChannel | Podcast; type: string }) => {
   return (
     <div className="bg-white dark:bg-dark/80 rounded-xl p-6 shadow-md hover-card">
+      {item.imageUrl && (
+        <img 
+          src={item.imageUrl} 
+          alt={item.title} 
+          className="w-full h-48 object-cover rounded-lg mb-4"
+        />
+      )}
       <h3 className="text-xl font-serif font-bold mb-2">{item.title}</h3>
-      {type === 'books' && <p className="text-secondary mb-2">by {item.author}</p>}
+      {'author' in item && <p className="text-secondary mb-2">by {item.author}</p>}
       <p className="mb-4">{item.description}</p>
-      <div className="flex flex-wrap gap-2">
-        {item.tags.map((tag: string, i: number) => (
-          <span 
-            key={i} 
-            className="inline-block bg-accent/20 text-dark dark:text-accent px-3 py-1 rounded-full text-sm"
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
+      {item.link && (
+        <a 
+          href={item.link} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="inline-block bg-accent text-dark px-4 py-2 rounded-lg hover:bg-accent/80 transition-colors"
+        >
+          Learn More
+        </a>
+      )}
     </div>
   );
 };
@@ -47,6 +64,10 @@ const CategoryItem = ({ item, type }: { item: any; type: string }) => {
 const Categories = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('books');
+  const [books, setBooks] = useState<Book[]>([]);
+  const [youtubeChannels, setYouTubeChannels] = useState<YouTubeChannel[]>([]);
+  const [podcasts, setPodcasts] = useState<Podcast[]>([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     document.title = "Quirkitopia Space! | Categories";
@@ -66,6 +87,43 @@ const Categories = () => {
         }
       }
     }
+
+    // Subscribe to books collection
+    const booksQuery = query(collection(db, "books"), orderBy("createdAt", "desc"));
+    const booksUnsubscribe = onSnapshot(booksQuery, (snapshot) => {
+      const booksData: Book[] = [];
+      snapshot.forEach((doc) => {
+        booksData.push({ id: doc.id, ...doc.data() } as Book);
+      });
+      setBooks(booksData);
+    });
+
+    // Subscribe to youtube collection
+    const youtubeQuery = query(collection(db, "youtube"), orderBy("createdAt", "desc"));
+    const youtubeUnsubscribe = onSnapshot(youtubeQuery, (snapshot) => {
+      const youtubeData: YouTubeChannel[] = [];
+      snapshot.forEach((doc) => {
+        youtubeData.push({ id: doc.id, ...doc.data() } as YouTubeChannel);
+      });
+      setYouTubeChannels(youtubeData);
+    });
+
+    // Subscribe to podcasts collection
+    const podcastsQuery = query(collection(db, "podcasts"), orderBy("createdAt", "desc"));
+    const podcastsUnsubscribe = onSnapshot(podcastsQuery, (snapshot) => {
+      const podcastsData: Podcast[] = [];
+      snapshot.forEach((doc) => {
+        podcastsData.push({ id: doc.id, ...doc.data() } as Podcast);
+      });
+      setPodcasts(podcastsData);
+      setLoading(false);
+    });
+
+    return () => {
+      booksUnsubscribe();
+      youtubeUnsubscribe();
+      podcastsUnsubscribe();
+    };
   }, [location]);
 
   const handleTabChange = (tab: string) => {
@@ -79,6 +137,21 @@ const Categories = () => {
       }, 100);
     }
   };
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <main className="pt-16 min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto"></div>
+            <p className="mt-4 text-lg">Loading content...</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>
@@ -127,8 +200,8 @@ const Categories = () => {
           bgColor="bg-light dark:bg-dark"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categoriesData.books.map((book, index) => (
-              <CategoryItem key={index} item={book} type="books" />
+            {books.map((book) => (
+              <CategoryItem key={book.id} item={book} type="books" />
             ))}
           </div>
         </SectionWrapper>
@@ -141,8 +214,8 @@ const Categories = () => {
           bgColor="bg-white dark:bg-black/20"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categoriesData.youtube.map((channel, index) => (
-              <CategoryItem key={index} item={channel} type="youtube" />
+            {youtubeChannels.map((channel) => (
+              <CategoryItem key={channel.id} item={channel} type="youtube" />
             ))}
           </div>
         </SectionWrapper>
@@ -155,8 +228,8 @@ const Categories = () => {
           bgColor="bg-light dark:bg-dark"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categoriesData.podcasts.map((podcast, index) => (
-              <CategoryItem key={index} item={podcast} type="podcasts" />
+            {podcasts.map((podcast) => (
+              <CategoryItem key={podcast.id} item={podcast} type="podcasts" />
             ))}
           </div>
         </SectionWrapper>
